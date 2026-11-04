@@ -1,0 +1,4 @@
+@extends('sampahrute.layouts.dashboard')
+@section('title','Riwayat Laporan')
+@section('page-title','Laporan Saya')
+@section('content')<div class="page-title-row"><div><div class="eyebrow">— RIWAYAT PELAPORAN</div><h1>Laporan Saya</h1><p>Contoh tampilan status laporan warga.</p></div><a href="{{ route('warga.create') }}" class="btn btn-primary">＋ Buat Laporan</a></div><div class="report-list">@foreach($reports as $r)<div class="panel report-item"><div class="report-card-icon">📄</div><div><span class="eyebrow">{{ $r['id'] }} · {{ $r['date'] }}</span><h3>{{ $r['title'] }}</h3><p>📍 {{ $r['location'] }}</p></div><x-sr-status :status="$r['status']"/></div>@endforeach</div><p class="note-text">Mode demo menampilkan semua laporan contoh; dalam sistem final halaman ini harus memfilter berdasarkan pengguna yang login.</p>@endsection

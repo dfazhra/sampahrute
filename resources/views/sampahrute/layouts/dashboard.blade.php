@@ -1,0 +1,14 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>@yield('title','Dashboard') — SampahRute</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/sampahrute.css') }}"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script><script src="{{ asset('js/sampahrute.js') }}" defer></script></head>
+<body class="dashboard-body"><div class="dashboard-shell"><aside class="sidebar" id="sidebar"><a class="brand brand-light" href="{{ route('home') }}"><span class="brand-icon">◈</span><span>Sampah<span class="green-light">Rute</span></span></a><div class="sidebar-caption">MENU {{ strtoupper($role ?? 'UMUM') }}</div>
+@php
+$menu = match($role ?? '') {
+'admin' => [['📊','Dashboard','admin.dashboard'],['📋','Kelola Laporan','admin.reports'],['📍','Kelola Lokasi','admin.locations'],['📆','Kelola Jadwal','admin.schedule'],['🗺','Peta Monitoring','map']],
+'petugas' => [['📊','Dashboard','petugas.dashboard'],['🚚','Tugas Pengangkutan','petugas.tasks'],['📆','Jadwal','schedule'],['🗺','Peta Lokasi','map']],
+default => [['🏠','Dashboard','warga.dashboard'],['➕','Buat Laporan','warga.create'],['📋','Laporan Saya','warga.reports'],['📆','Jadwal','schedule'],['🗺','Peta Lokasi','map']]
+};
+@endphp
+<nav class="side-menu">@foreach($menu as $item)<a class="{{ request()->routeIs($item[2]) ? 'active' : '' }}" href="{{ route($item[2]) }}"><span>{{ $item[0] }}</span>{{ $item[1] }}</a>@endforeach</nav><div class="sidebar-bottom"><a href="{{ route('home') }}">← Kembali ke Beranda</a><form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="side-logout">[-> Keluar Akun</button></form></div></aside>
+<div class="dashboard-main"><header class="dashboard-top"><button class="dash-menu-button" type="button" data-sidebar-toggle>☰</button><div><span class="small-muted">SampahRute / {{ ucfirst($role ?? 'Publik') }}</span><strong>@yield('page-title','Dashboard')</strong></div><div class="user-chip"><span class="avatar">{{ strtoupper(substr($role ?? 'U',0,1)) }}</span><span>{{ ucfirst($role ?? 'Pengunjung') }} <small>Mode demo</small></span></div></header><main class="dashboard-content">
+@if(session('success'))<div class="alert success">{{ session('success') }}</div>@endif
+@yield('content')
+</main></div></div></body></html>

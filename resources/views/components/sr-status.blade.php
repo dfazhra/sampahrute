@@ -1,0 +1,1 @@
+@props(['status'=>'menunggu'])<span {{ $attributes->class(['status-badge', 'status-'.$status]) }}>{{ ['menunggu'=>'Belum Diangkut','diproses'=>'Dalam Proses','selesai'=>'Selesai'][$status] ?? ucfirst($status) }}</span>

@@ -2,164 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\DemoData;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Http\RedirectResponse;
 
+/**
+ * Controller prototype frontend SampahRute.
+ *
+ * Data berasal dari App\Support\DemoData (data contoh + perubahan
+ * sementara di cache). Belum ada Model/database: semua aksi hanya
+ * simulasi agar alur Admin → Petugas → Warga bisa dipresentasikan.
+ */
 class SampahRuteDemoController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | DATA LOKASI CONTOH
-    |--------------------------------------------------------------------------
-    */
-
-    private function sampleLocations(): array
+    private function data(Request $request): DemoData
     {
-        return [
-            [
-                'name' => 'TPS Manahan',
-                'district' => 'Banjarsari',
-                'address' => 'Area Manahan, Surakarta',
-                'lat' => -7.5568,
-                'lng' => 110.8004,
-                'status' => 'selesai',
-                'date' => '30 Okt 2026',
-            ],
-            [
-                'name' => 'TPS Jebres',
-                'district' => 'Jebres',
-                'address' => 'Area Jebres, Surakarta',
-                'lat' => -7.5596,
-                'lng' => 110.8481,
-                'status' => 'diproses',
-                'date' => '30 Okt 2026',
-            ],
-            [
-                'name' => 'TPS Pasar Gede',
-                'district' => 'Pasar Kliwon',
-                'address' => 'Area Pasar Gede, Surakarta',
-                'lat' => -7.5704,
-                'lng' => 110.8323,
-                'status' => 'menunggu',
-                'date' => '31 Okt 2026',
-            ],
-            [
-                'name' => 'TPS Laweyan',
-                'district' => 'Laweyan',
-                'address' => 'Area Laweyan, Surakarta',
-                'lat' => -7.5709,
-                'lng' => 110.7976,
-                'status' => 'selesai',
-                'date' => '31 Okt 2026',
-            ],
-            [
-                'name' => 'TPS Serengan',
-                'district' => 'Serengan',
-                'address' => 'Area Serengan, Surakarta',
-                'lat' => -7.5922,
-                'lng' => 110.8192,
-                'status' => 'menunggu',
-                'date' => '1 Nov 2026',
-            ],
-        ];
+        return new DemoData();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DATA LAPORAN CONTOH
-    |--------------------------------------------------------------------------
-    */
-
-    private function reports(): array
+    private function render(Request $request, string $view, array $extra = [])
     {
-        return [
-            [
-                'id' => 'SR-001',
-                'title' => 'Sampah belum diangkut',
-                'location' => 'TPS Pasar Gede',
-                'resident' => 'Andi Pratama',
-                'date' => '29 Okt 2026',
-                'status' => 'menunggu',
-            ],
-            [
-                'id' => 'SR-002',
-                'title' => 'Penumpukan sampah rumah tangga',
-                'location' => 'TPS Jebres',
-                'resident' => 'Rina Putri',
-                'date' => '28 Okt 2026',
-                'status' => 'diproses',
-            ],
-            [
-                'id' => 'SR-003',
-                'title' => 'Sampah melebihi kapasitas',
-                'location' => 'TPS Manahan',
-                'resident' => 'Budi Santoso',
-                'date' => '27 Okt 2026',
-                'status' => 'selesai',
-            ],
-            [
-                'id' => 'SR-004',
-                'title' => 'Pengangkutan terlambat',
-                'location' => 'TPS Serengan',
-                'resident' => 'Dewi Lestari',
-                'date' => '29 Okt 2026',
-                'status' => 'menunggu',
-            ],
-        ];
-    }
+        $data = $this->data($request);
+        $role = $extra['role'] ?? $request->session()->get('demo_role');
 
-    /*
-    |--------------------------------------------------------------------------
-    | RENDER HALAMAN
-    |--------------------------------------------------------------------------
-    */
-
-    private function render(string $view, array $extra = [])
-    {
         return view($view, array_merge([
-            'points' => $this->sampleLocations(),
-            'reports' => $this->reports(),
+            'data' => $data,
+            'points' => $data->mapPoints(),
+            'locations' => $data->locations(),
+            'reports' => $data->reports(),
+            'officers' => $data->officers(),
+            'notifications' => $data->notifications($role),
+            'me' => DemoData::DEMO_USERS[$role] ?? null,
+            'sessionRole' => $request->session()->get('demo_role'),
         ], $extra));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PEMERIKSAAN ROLE DEMO
-    |--------------------------------------------------------------------------
-    */
-
-    private function checkRole(
-        Request $request,
-        array $allowedRoles
-    ): ?RedirectResponse {
+    private function checkRole(Request $request, array $allowedRoles): ?RedirectResponse
+    {
         abort_unless(app()->environment('local'), 403);
 
         $role = $request->session()->get('demo_role');
 
-        if (!$role) {
-            return redirect()->route('login')
-                ->with('error', 'Silakan login terlebih dahulu.');
+        if (! $role) {
+            return redirect()->route('login')->with('error', 'Masuk dulu untuk membuka halaman ini.');
         }
 
-        abort_unless(
-            in_array($role, $allowedRoles, true),
-            403,
-            'Anda tidak memiliki akses ke halaman ini.'
-        );
+        abort_unless(in_array($role, $allowedRoles, true), 403, 'Halaman ini hanya untuk peran '.implode(' / ', $allowedRoles).'.');
 
         return null;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | HALAMAN PUBLIK
-    |--------------------------------------------------------------------------
-    */
-
-    public function landing()
+    /** Halaman publik yang tampil di dalam dashboard jika pengguna sudah login. */
+    private function publicOrDashboard(Request $request, string $view)
     {
-        return $this->render('sampahrute.landing');
+        $role = $request->session()->get('demo_role');
+
+        return $this->render($request, $view, $role ? ['role' => $role] : []);
+    }
+
+    /* ---------------------------------------------------------------
+     | Publik
+     * --------------------------------------------------------------*/
+
+    public function landing(Request $request)
+    {
+        return $this->render($request, 'sampahrute.landing');
     }
 
     public function login(Request $request)
@@ -169,32 +77,30 @@ class SampahRuteDemoController extends Controller
         $role = $request->session()->get('demo_role');
 
         if (in_array($role, ['admin', 'petugas', 'warga'], true)) {
-            return redirect()->route($role . '.dashboard');
+            return redirect()->route($role.'.dashboard');
         }
 
-        return $this->render('sampahrute.auth.login');
+        return $this->render($request, 'sampahrute.auth.login');
     }
 
-    public function map()
+    public function map(Request $request)
     {
-        return $this->render('sampahrute.map');
+        return $this->publicOrDashboard($request, 'sampahrute.map');
     }
 
-    public function locations()
+    public function locations(Request $request)
     {
-        return $this->render('sampahrute.locations');
+        return $this->publicOrDashboard($request, 'sampahrute.locations');
     }
 
-    public function schedule()
+    public function schedule(Request $request)
     {
-        return $this->render('sampahrute.schedule');
+        return $this->publicOrDashboard($request, 'sampahrute.schedule');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PROSES LOGIN DEMO
-    |--------------------------------------------------------------------------
-    */
+    /* ---------------------------------------------------------------
+     | Login demo
+     * --------------------------------------------------------------*/
 
     public function signIn(Request $request)
     {
@@ -206,122 +112,90 @@ class SampahRuteDemoController extends Controller
         ]);
 
         $accounts = [
-            'admin' => [
-                'password' => 'admin123',
-                'role' => 'admin',
-            ],
-            'petugas' => [
-                'password' => 'petugas123',
-                'role' => 'petugas',
-            ],
-            'warga' => [
-                'password' => 'warga123',
-                'role' => 'warga',
-            ],
+            'admin' => 'admin123',
+            'petugas' => 'petugas123',
+            'warga' => 'warga123',
         ];
 
         $username = strtolower(trim($data['email']));
-        $password = $data['password'];
 
-        $account = $accounts[$username] ?? null;
-
-        if (
-            !$account ||
-            !hash_equals($account['password'], $password)
-        ) {
+        if (! isset($accounts[$username]) || ! hash_equals($accounts[$username], $data['password'])) {
             return back()
-                ->withErrors([
-                    'email' => 'Username atau password salah.',
-                ])
+                ->withErrors(['email' => 'Username atau password salah. Coba salah satu akun demo di bawah form.'])
                 ->onlyInput('email');
         }
 
         $request->session()->regenerate();
-
-        $request->session()->put([
-            'demo_role' => $account['role'],
-            'demo_username' => $username,
-        ]);
+        $request->session()->put(['demo_role' => $username, 'demo_username' => $username]);
 
         return redirect()
-            ->route($account['role'] . '.dashboard')
-            ->with('success', 'Berhasil masuk sebagai ' . ucfirst($account['role']));
+            ->route($username.'.dashboard')
+            ->with('success', 'Masuk sebagai '.DemoData::DEMO_USERS[$username]['name'].' ('.ucfirst($username).').');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOGOUT
-    |--------------------------------------------------------------------------
-    */
 
     public function logout(Request $request)
     {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home')
-            ->with('success', 'Anda berhasil keluar.');
+        return redirect()->route('home')->with('success', 'Anda sudah keluar.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD ADMIN
-    |--------------------------------------------------------------------------
-    */
+    /* ---------------------------------------------------------------
+     | Admin
+     * --------------------------------------------------------------*/
 
     public function admin(Request $request)
     {
-        if ($response = $this->checkRole($request, ['admin'])) {
-            return $response;
-        }
-
-        return $this->render(
-            'sampahrute.admin.dashboard',
-            ['role' => 'admin']
-        );
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.admin.dashboard', ['role' => 'admin', 'logs' => $this->data($request)->logs()]);
     }
 
     public function adminReports(Request $request)
     {
-        if ($response = $this->checkRole($request, ['admin'])) {
-            return $response;
-        }
-
-        return $this->render(
-            'sampahrute.admin.reports',
-            ['role' => 'admin']
-        );
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.admin.reports', ['role' => 'admin']);
     }
 
     public function adminLocations(Request $request)
     {
-        if ($response = $this->checkRole($request, ['admin'])) {
-            return $response;
-        }
-
-        return $this->render(
-            'sampahrute.locations',
-            ['role' => 'admin']
-        );
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.admin.locations', ['role' => 'admin']);
     }
 
     public function adminSchedule(Request $request)
     {
-        if ($response = $this->checkRole($request, ['admin'])) {
-            return $response;
-        }
-
-        return $this->render(
-            'sampahrute.schedule',
-            ['role' => 'admin']
-        );
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.admin.schedule', ['role' => 'admin']);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD PETUGAS
-    |--------------------------------------------------------------------------
-    */
+    public function adminHistory(Request $request)
+    {
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.history', ['role' => 'admin', 'logs' => $this->data($request)->logs()]);
+    }
+
+    public function adminUsers(Request $request)
+    {
+        return $this->checkRole($request, ['admin'])
+            ?? $this->render($request, 'sampahrute.admin.users', ['role' => 'admin', 'users' => $this->data($request)->users()]);
+    }
+
+    /* ---------------------------------------------------------------
+     | Petugas
+     * --------------------------------------------------------------*/
+
+    private function officerRoute(DemoData $data): array
+    {
+        $mine = array_filter(
+            $data->locations(),
+            fn ($l) => $l['officer_id'] === DemoData::DEMO_USERS['petugas']['officer_id'] && $l['scheduled_today']
+        );
+
+        uasort($mine, fn ($a, $b) => strcmp($a['window'], $b['window']));
+
+        return $mine;
+    }
 
     public function officer(Request $request)
     {
@@ -329,10 +203,13 @@ class SampahRuteDemoController extends Controller
             return $response;
         }
 
-        return $this->render(
-            'sampahrute.petugas.dashboard',
-            ['role' => 'petugas']
-        );
+        $data = $this->data($request);
+
+        return $this->render($request, 'sampahrute.petugas.dashboard', [
+            'role' => 'petugas',
+            'route' => $this->officerRoute($data),
+            'myReports' => $data->reportsFor('petugas'),
+        ]);
     }
 
     public function tasks(Request $request)
@@ -341,59 +218,62 @@ class SampahRuteDemoController extends Controller
             return $response;
         }
 
-        return $this->render(
-            'sampahrute.petugas.tasks',
-            ['role' => 'petugas']
-        );
+        $data = $this->data($request);
+
+        return $this->render($request, 'sampahrute.petugas.tasks', [
+            'role' => 'petugas',
+            'route' => $this->officerRoute($data),
+            'myReports' => $data->reportsFor('petugas'),
+        ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD WARGA
-    |--------------------------------------------------------------------------
-    */
-
-    public function citizen(Request $request)
+    public function officerHistory(Request $request)
     {
-        if ($response = $this->checkRole($request, ['warga'])) {
+        if ($response = $this->checkRole($request, ['petugas'])) {
             return $response;
         }
 
-        return $this->render(
-            'sampahrute.warga.dashboard',
-            ['role' => 'warga']
-        );
+        $logs = array_values(array_filter(
+            $this->data($request)->logs(),
+            fn ($l) => $l['officer_id'] === DemoData::DEMO_USERS['petugas']['officer_id']
+        ));
+
+        return $this->render($request, 'sampahrute.history', ['role' => 'petugas', 'logs' => $logs]);
+    }
+
+    /* ---------------------------------------------------------------
+     | Warga
+     * --------------------------------------------------------------*/
+
+    public function citizen(Request $request)
+    {
+        return $this->checkRole($request, ['warga'])
+            ?? $this->render($request, 'sampahrute.warga.dashboard', ['role' => 'warga', 'myReports' => $this->data($request)->reportsFor('warga')]);
     }
 
     public function citizenReports(Request $request)
     {
-        if ($response = $this->checkRole($request, ['warga'])) {
-            return $response;
-        }
-
-        return $this->render(
-            'sampahrute.warga.reports',
-            ['role' => 'warga']
-        );
+        return $this->checkRole($request, ['warga'])
+            ?? $this->render($request, 'sampahrute.warga.reports', ['role' => 'warga', 'myReports' => $this->data($request)->reportsFor('warga')]);
     }
 
-    public function reportForm(Request $request)
+    public function citizenReport(Request $request, string $id)
     {
         if ($response = $this->checkRole($request, ['warga'])) {
             return $response;
         }
 
-        return $this->render(
-            'sampahrute.warga.create',
-            ['role' => 'warga']
-        );
+        $report = $this->data($request)->reportsFor('warga')[$id] ?? null;
+        abort_unless($report, 404, 'Laporan '.$id.' tidak ditemukan di akun Anda.');
+
+        return $this->render($request, 'sampahrute.warga.show', ['role' => 'warga', 'report' => $report]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PENGIRIMAN LAPORAN DEMO
-    |--------------------------------------------------------------------------
-    */
+    public function reportForm(Request $request)
+    {
+        return $this->checkRole($request, ['warga'])
+            ?? $this->render($request, 'sampahrute.warga.create', ['role' => 'warga']);
+    }
 
     public function submitReport(Request $request)
     {
@@ -401,44 +281,163 @@ class SampahRuteDemoController extends Controller
             return $response;
         }
 
-        $request->validate([
+        $valid = $request->validate([
             'title' => 'required|string|max:150',
-            'location' => 'required|string|max:150',
-            'date' => 'required|date',
+            'category' => 'required|in:'.implode(',', array_keys(DemoData::CATEGORIES)),
+            'location_id' => 'required|string',
+            'date' => 'required|date|before_or_equal:today',
             'description' => 'required|string|min:10|max:2000',
             'photo' => 'nullable|image|max:3072',
+        ], [
+            'location_id.required' => 'Pilih lokasi sampah.',
+            'date.before_or_equal' => 'Tanggal kejadian tidak boleh di masa depan.',
+            'description.min' => 'Deskripsi minimal 10 karakter supaya petugas paham kondisinya.',
         ]);
 
-        return redirect()
-            ->route('warga.reports')
-            ->with(
-                'success',
-                'Form valid. Laporan belum disimpan karena masih mode demo.'
-            );
+        $data = $this->data($request);
+        abort_unless($data->location($valid['location_id']), 422);
+
+        $id = $data->addReport([
+            'title' => $valid['title'],
+            'category' => $valid['category'],
+            'location_id' => $valid['location_id'],
+            'description' => $valid['description'],
+        ]);
+
+        return redirect()->route('warga.show', $id)
+            ->with('success', "Laporan $id terkirim. Admin akan memverifikasinya. (Mode demo: tersimpan sementara.)");
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE STATUS DEMO
-    |--------------------------------------------------------------------------
-    */
+    /* ---------------------------------------------------------------
+     | Aksi demo
+     * --------------------------------------------------------------*/
 
+    /** Ubah status laporan (admin) atau tandai selesai (petugas). */
     public function updateStatus(Request $request)
     {
-        if ($response = $this->checkRole(
-            $request,
-            ['admin', 'petugas']
-        )) {
+        if ($response = $this->checkRole($request, ['admin', 'petugas'])) {
             return $response;
         }
 
-        $request->validate([
-            'status' => 'required|in:menunggu,diproses,selesai',
+        $role = $request->session()->get('demo_role');
+        $data = $this->data($request);
+
+        $valid = $request->validate([
+            'report_id' => 'required|string',
+            'status' => 'required|in:'.implode(',', DemoData::REPORT_STATUSES),
+            'officer_id' => 'nullable|string',
+            'reason' => 'nullable|required_if:status,ditolak|string|max:300',
+        ], [
+            'reason.required_if' => 'Tulis alasan penolakan supaya warga tahu.',
         ]);
 
-        return back()->with(
-            'success',
-            'Status diuji. Perubahan belum disimpan ke database.'
-        );
+        $report = $data->report($valid['report_id']);
+        abort_unless($report, 404);
+
+        if ($role === 'petugas') {
+            abort_unless($report['officer_id'] === DemoData::DEMO_USERS['petugas']['officer_id'] && $valid['status'] === 'selesai', 403, 'Petugas hanya bisa menyelesaikan laporan yang ditugaskan kepadanya.');
+        }
+
+        if ($valid['status'] === 'diproses' && empty($valid['officer_id']) && ! $report['officer_id']) {
+            return back()->withErrors(['officer_id' => 'Pilih petugas sebelum menugaskan laporan.']);
+        }
+
+        $data->setReportStatus($report['id'], $valid['status'], $valid['officer_id'] ?? null, $valid['reason'] ?? null);
+
+        $labels = ['menunggu' => 'dikembalikan ke antrean', 'diverifikasi' => 'diverifikasi', 'diproses' => 'ditugaskan ke petugas', 'selesai' => 'ditandai selesai', 'ditolak' => 'ditolak'];
+
+        return back()->with('success', "Laporan {$report['id']} {$labels[$valid['status']]}.");
+    }
+
+    /** Petugas mengonfirmasi pengangkutan di satu titik. */
+    public function confirmPickup(Request $request)
+    {
+        if ($response = $this->checkRole($request, ['petugas'])) {
+            return $response;
+        }
+
+        $data = $this->data($request);
+
+        $valid = $request->validate([
+            'location_id' => 'required|string',
+            'status' => 'required|in:diproses,selesai',
+            'time' => 'nullable|required_if:status,selesai|date_format:H:i',
+            'volume' => 'nullable|numeric|min:0|max:50',
+            'note' => 'nullable|string|max:300',
+            'photo' => 'nullable|image|max:3072',
+        ], [
+            'time.required_if' => 'Isi jam pengangkutan.',
+        ]);
+
+        $loc = $data->location($valid['location_id']);
+        abort_unless($loc && $loc['officer_id'] === DemoData::DEMO_USERS['petugas']['officer_id'], 403);
+
+        $log = [];
+        if ($valid['status'] === 'selesai') {
+            $end = trim(explode('–', $loc['window'])[1]);
+            $log = [
+                'id' => 'LOG-'.$loc['id'].'-'.now()->format('md'),
+                'date' => today()->toDateString(),
+                'location_id' => $loc['id'],
+                'location' => $loc['name'],
+                'district' => $loc['district'],
+                'officer_id' => $loc['officer_id'],
+                'officer' => $loc['officer']['name'],
+                'window' => $loc['window'],
+                'actual' => $valid['time'],
+                'volume' => $valid['volume'] ?? null,
+                'result' => $valid['time'] <= $end ? 'tepat' : 'terlambat',
+                'note' => $valid['note'] ?? '',
+            ];
+        }
+
+        $data->setLocationStatus($loc['id'], $valid['status'], $log);
+
+        $msg = $valid['status'] === 'selesai'
+            ? "{$loc['name']} tercatat sudah diangkut pukul {$valid['time']}."
+            : "Pengangkutan di {$loc['name']} dimulai.";
+
+        return back()->with('success', $msg);
+    }
+
+    /** Form lokasi, jadwal, dan pengguna: validasi saja (belum ada database). */
+    public function saveDemo(Request $request)
+    {
+        if ($response = $this->checkRole($request, ['admin'])) {
+            return $response;
+        }
+
+        $entity = $request->input('entity');
+
+        $rules = match ($entity) {
+            'lokasi' => ['name' => 'required|string|max:100', 'type' => 'required|in:TPS,Depo,Kontainer', 'district' => 'required|string', 'address' => 'required|string|max:200', 'lat' => 'required|numeric|between:-7.65,-7.50', 'lng' => 'required|numeric|between:110.75,110.90', 'capacity' => 'required|numeric|min:1|max:50'],
+            'jadwal' => ['location_id' => 'required|string', 'officer_id' => 'required|string', 'days' => 'required|array|min:1', 'window_start' => 'required|date_format:H:i', 'window_end' => 'required|date_format:H:i|after:window_start'],
+            'pengguna' => ['name' => 'required|string|max:100', 'username' => ['required', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/'], 'role' => 'required|in:admin,petugas,warga'],
+            'hapus' => ['target' => 'required|string'],
+            default => ['entity' => 'required|in:lokasi,jadwal,pengguna,hapus'],
+        };
+
+        $request->validate($rules, [
+            'lat.between' => 'Titik harus berada di wilayah Surakarta. Klik peta untuk memilih.',
+            'lng.between' => 'Titik harus berada di wilayah Surakarta. Klik peta untuk memilih.',
+            'days.required' => 'Pilih minimal satu hari pengangkutan.',
+            'window_end.after' => 'Jam selesai harus setelah jam mulai.',
+        ]);
+
+        $messages = [
+            'lokasi' => 'Data lokasi valid.',
+            'jadwal' => 'Jadwal valid.',
+            'pengguna' => 'Data pengguna valid.',
+            'hapus' => $request->input('target').' akan dihapus.',
+        ];
+
+        return back()->with('success', $messages[$entity].' Belum tersimpan karena backend belum tersedia.');
+    }
+
+    public function resetDemo(Request $request)
+    {
+        $this->data($request)->reset();
+
+        return back()->with('success', 'Data demo dikembalikan ke kondisi awal.');
     }
 }

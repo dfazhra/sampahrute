@@ -13,21 +13,12 @@
 
         {{-- Pesan error --}}
         @if ($errors->any())
-            <div style="
-                background:#fef2f2;
-                border:1px solid #fecaca;
-                color:#b91c1c;
-                padding:12px;
-                border-radius:10px;
-                margin:15px 0;
-            ">
-                <strong>Login gagal!</strong>
-                <ul style="margin:8px 0 0; padding-left:18px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div class="alert error login-alert" role="alert">
+                <strong>Login gagal.</strong> {{ $errors->first() }}
             </div>
+        @endif
+        @if (session('error'))
+            <div class="alert error login-alert" role="alert">{{ session('error') }}</div>
         @endif
 
         {{-- Form login --}}
@@ -90,9 +81,20 @@
                 type="submit"
                 class="btn btn-primary full-width"
             >
-                Masuk →
+                Masuk
             </button>
         </form>
+
+        <div class="demo-accounts">
+            <p>Akun demo untuk presentasi — klik untuk mengisi otomatis:</p>
+            <div>
+                @foreach (['admin' => ['🛠', 'Admin'], 'petugas' => ['🚚', 'Petugas'], 'warga' => ['🏠', 'Warga']] as $user => [$icon, $label])
+                    <button type="button" class="demo-chip" data-demo-user="{{ $user }}" data-demo-pass="{{ $user }}123">
+                        <span aria-hidden="true">{{ $icon }}</span>{{ $label }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
 
         <a class="back-link" href="{{ route('home') }}">
             ← Kembali ke Beranda

@@ -1,66 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SampahRute — Sistem Monitoring & Pelaporan Pengangkutan Sampah Kota Surakarta
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web berbasis **Laravel 11 + SQLite + Blade** untuk memantau jadwal pengangkutan sampah, mencatat pengangkutan harian oleh petugas lapangan, dan mengelola laporan warga di Kota Surakarta.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Cara Menjalankan Aplikasi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### A. Langsung Menjalankan (Jika Proyek Sudah Terkonfigurasi)
+Jika folder `vendor/`, file `.env`, dan database `database/database.sqlite` sudah tersedia:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+php artisan serve
+```
 
-## Learning Laravel
+Lalu buka di browser:
+- **Beranda Publik**: `http://localhost:8000`
+- **Halaman Login**: `http://localhost:8000/login`
+- **Pendaftaran Warga Baru**: `http://localhost:8000/register`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### B. Instalasi dari Awal (Clone Baru / Komputer Lain)
+Jika proyek baru saja di-*clone* dari repositori Git:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1. Instal dependensi PHP melalui Composer
+composer install
 
-## Laravel Sponsors
+# 2. Salin konfigurasi environment & buat APP_KEY
+cp .env.example .env
+php artisan key:generate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 3. Buat file database SQLite (jika belum ada)
+# Di PowerShell (Windows):
+New-Item -ItemType File -Path database/database.sqlite -Force
 
-### Premium Partners
+# 4. Jalankan migrasi tabel & isi data awal (Seeder Surakarta)
+php artisan migrate:fresh --seed
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+# 5. Jalankan server pengembangan Laravel
+php artisan serve
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Akun Bawaan (Seeder)
 
-## Code of Conduct
+Di halaman `/login`, tersedia tombol pengisian cepat (**Admin / Petugas / Warga**) atau Anda dapat masuk manual menggunakan akun berikut:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Peran | Username | Password | Nama | Wilayah / Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin123` | Rahmat Hidayat | Semua wilayah (Pengelola Lingkungan) |
+| **Admin** | `lina.admin` | `admin123` | Lina Marlina | Semua wilayah (Pengelola Lingkungan) |
+| **Petugas** | `petugas` | `petugas123` | Agus Wibowo | `PTG-01` — Banjarsari & Laweyan |
+| **Petugas** | `joko` | `petugas123` | Joko Susilo | `PTG-02` — Jebres & Pasar Kliwon |
+| **Petugas** | `wahyu` | `petugas123` | Wahyu Hidayat | `PTG-03` — Serengan |
+| **Warga** | `warga` | `warga123` | Andi Pratama | Kecamatan Banjarsari |
+| **Warga** | `rina.putri` | `warga123` | Rina Putri | Kecamatan Jebres |
 
-## Security Vulnerabilities
+> **Reset Data ke Kondisi Awal:** Klik tombol **↺ Reset data demo** di bagian bawah *sidebar* dashboard, atau jalankan `php artisan migrate:fresh --seed`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Fitur Utama Backend & Frontend
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. **Autentikasi Berbasis Database & Role Middleware (`role:admin`, `role:petugas`, `role:warga`)**
+   - Login menggunakan `username` atau `email` dengan `Hash` password Laravel (`Auth::login`).
+   - Proteksi rute otomatis berdasarkan peran menggunakan middleware `App\Http\Middleware\EnsureUserRole`.
+   - **Registrasi Akun Warga** (`/register`) agar warga baru dapat langsung mendaftar dan membuat laporan.
+
+2. **Panel Admin (`/admin/*`)**
+   - **Dashboard Analitik (`/admin/dashboard`)**: Statistik laporan 7 hari terakhir, komposisi status laporan, lokasi hampir penuh ($\ge 85\%$), dan progres pengangkutan harian.
+   - **Kelola Laporan Warga (`/admin/laporan`)**: Verifikasi laporan masuk, tolak laporan disertai alasan, atau tugaskan ke petugas wilayah.
+   - **Kelola Lokasi (`/admin/lokasi`)**: Tambah, ubah, dan hapus titik TPS/Depo/Kontainer dengan pemilih koordinat peta interaktif (Leaflet).
+   - **Kelola Jadwal (`/admin/jadwal`)**: Atur hari pengangkutan, rentang jam, dan petugas penanggung jawab untuk setiap titik.
+   - **Monitoring Riwayat Pengangkutan (`/admin/riwayat`)**: Kalender ketepatan 14 hari terakhir (`tepat`, `terlambat`, `terlewat`) dan ekspor CSV.
+   - **Kelola Pengguna (`/admin/pengguna`)**: Tambah, ubah, dan hapus akun Admin, Petugas, maupun Warga.
+
+3. **Panel Petugas (`/petugas/*`)**
+   - **Dashboard & Peta Rute Harian (`/petugas/dashboard`)**: Urutan titik pengangkutan terjadwal hari ini beserta visualisasi rute di peta.
+   - **Tugas Hari Ini (`/petugas/tugas`)**: Mulai pengangkutan (`diproses`), konfirmasi selesai diangkut (`selesai`) beserta jam aktual, volume ($\text{m}^3$), catatan, dan unggah foto bukti (`public/uploads/pickups`), serta selesaikan laporan warga yang ditugaskan.
+   - **Riwayat Pengangkutan Saya (`/petugas/riwayat`)**: Log pengangkutan khusus petugas yang sedang login.
+
+4. **Portal Warga (`/warga/*`)**
+   - **Dashboard Warga (`/warga/dashboard`)**: Ringkasan laporan aktif dan jadwal angkut di kecamatan sekitar.
+   - **Buat Laporan (`/warga/laporan/buat`)**: Kirim laporan masalah sampah dengan pemilihan titik di peta dan unggah foto bukti (`public/uploads/reports`).
+   - **Laporan Saya & Timeline Detail (`/warga/laporan/{id}`)**: Pantau riwayat tahap penanganan laporan dari dikirim, diverifikasi admin, ditugaskan ke petugas, hingga selesai.
+
+---
+
+## Struktur Database & File Penting
+
+- **Database SQLite**: `database/database.sqlite`
+- **Migrasi**:
+  - `database/migrations/0001_01_01_000000_create_users_table.php` (`users`, `sessions`)
+  - `database/migrations/2026_01_01_000003_create_sampahrute_tables.php` (`officers`, `locations`, `reports`, `pickup_logs`)
+- **Model Eloquent**:
+  - `app/Models/User.php`
+  - `app/Models/Officer.php`
+  - `app/Models/Location.php`
+  - `app/Models/Report.php`
+  - `app/Models/PickupLog.php`
+- **Controller & Layanan Data**:
+  - `app/Http/Controllers/SampahRuteDemoController.php`
+  - `app/Support/DemoData.php`
+  - `app/Http/Middleware/EnsureUserRole.php`
+- **Seeder**:
+  - `database/seeders/DatabaseSeeder.php`
+
+---
+
+## Menjalankan Pengujian Otomatis (Testing)
+
+Untuk menjalankan pengujian fitur otomatis (halaman publik, autentikasi, *role middleware*, registrasi warga, pembuatan laporan, CRUD admin, dan konfirmasi pengangkutan petugas):
+
+```bash
+php artisan test
+```

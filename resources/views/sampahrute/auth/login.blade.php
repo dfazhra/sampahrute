@@ -96,6 +96,10 @@
             </div>
         </div>
 
+        <p style="margin-top: 1rem; text-align: center; font-size: 0.92rem;">
+            Warga baru? <a href="{{ route('register') }}" style="font-weight: 700; color: var(--green-700, #0b7541);">Daftar akun warga</a>
+        </p>
+
         <a class="back-link" href="{{ route('home') }}">
             ← Kembali ke Beranda
         </a>

@@ -8,7 +8,7 @@
 @php
     $role = $role ?? 'warga';
     $pending = collect($reports ?? [])->where('status', 'menunggu')->count();
-    $myTasks = collect($locations ?? [])->where('officer_id', 'PTG-01')->whereIn('status', ['menunggu', 'diproses'])->count();
+    $myTasks = collect($locations ?? [])->where('officer_id', $me['officer_id'] ?? 'PTG-01')->whereIn('status', ['menunggu', 'diproses'])->count();
     $menu = match ($role) {
         'admin' => [
             ['📊', 'Dashboard', 'admin.dashboard', null],

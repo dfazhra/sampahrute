@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: sampahrute
+    runtime: docker
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: SampahRute
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: Asia/Jakarta
+      - key: APP_LOCALE
+        value: id
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database

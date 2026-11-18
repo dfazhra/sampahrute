@@ -9,6 +9,14 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('app:deploy-init', function () {
+    if (! file_exists(base_path('.env')) && file_exists(base_path('.env.example'))) {
+        copy(base_path('.env.example'), base_path('.env'));
+    }
+
+    if (empty(config('app.key'))) {
+        $this->call('key:generate', ['--force' => true]);
+    }
+
     $dbPath = database_path('database.sqlite');
     if (! file_exists($dbPath)) {
         touch($dbPath);

@@ -22,11 +22,16 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
 # Copy application source
 COPY . .
 
-# Finish composer autoload & ensure writable directories
-RUN composer dump-autoload --optimize --no-dev \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache database public/uploads/reports public/uploads/pickups \
+# Prepare .env, APP_KEY, writable directories, and pre-seed SQLite database during build
+RUN cp .env.example .env \
+    && sed -i 's/APP_NAME=Laravel/APP_NAME=SampahRute/' .env \
+    && sed -i 's/APP_LOCALE=en/APP_LOCALE=id/' .env \
+    && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache database public/uploads/reports public/uploads/pickups \
     && touch database/database.sqlite \
-    && chmod -R 775 storage bootstrap/cache database public/uploads
+    && composer dump-autoload --optimize --no-dev \
+    && php artisan key:generate --force \
+    && php artisan app:deploy-init \
+    && chmod -R 777 storage bootstrap/cache database public/uploads .env
 
 EXPOSE 8000
 

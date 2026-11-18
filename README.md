@@ -110,6 +110,62 @@ Di halaman `/login`, tersedia tombol pengisian cepat (**Admin / Petugas / Warga*
 
 ---
 
+## Cara Mengakses & Melihat Data
+
+Ada **4 cara** untuk melihat, mengakses, dan mengelola data pada aplikasi ini:
+
+### 1. Melalui Antarmuka Web (Browser)
+Setelah menjalankan `php artisan serve`, login sebagai **Admin** (`admin` / `admin123`) di `http://localhost:8000/login`:
+- **Data Laporan Warga**: `http://localhost:8000/admin/laporan` (tersedia tombol **Unduh CSV**)
+- **Data Titik Lokasi (TPS/Depo/Kontainer)**: `http://localhost:8000/admin/lokasi`
+- **Data Jadwal & Petugas**: `http://localhost:8000/admin/jadwal`
+- **Data Riwayat Pengangkutan**: `http://localhost:8000/admin/riwayat` (tersedia tombol **Unduh CSV**)
+- **Data Akun Pengguna**: `http://localhost:8000/admin/pengguna`
+
+### 2. Membuka File Database SQLite Secara Visual (GUI)
+Seluruh data tersimpan di dalam satu file: `database/database.sqlite`.
+- **Ekstensi VS Code / Editor**: Instal ekstensi **SQLite Viewer** (oleh Florian Klampfer), lalu klik file `database/database.sqlite` di panel kiri editor untuk melihat isi tabel (`users`, `officers`, `locations`, `reports`, `pickup_logs`).
+- **Aplikasi Database Eksternal**: Buka file `database/database.sqlite` menggunakan **DB Browser for SQLite**, **DBeaver**, atau **TablePlus**.
+
+### 3. Melalui Terminal (`php artisan tinker`)
+Jalankan perintah berikut di terminal untuk mengecek atau memanipulasi data secara interaktif:
+
+```bash
+php artisan tinker
+```
+
+Contoh perintah di dalam Tinker:
+```php
+// Melihat semua pengguna
+App\Models\User::all();
+
+// Melihat semua titik lokasi TPS/Depo
+App\Models\Location::all();
+
+// Melihat laporan yang masih menunggu verifikasi
+App\Models\Report::where('status', 'menunggu')->get();
+
+// Melihat 5 riwayat pengangkutan terbaru
+App\Models\PickupLog::latest('pickup_date')->take(5)->get();
+```
+*(Ketik `exit` untuk keluar dari Tinker).*
+
+### 4. Melalui Kode PHP / Controller (Eloquent ORM)
+Gunakan Model Eloquent di `app/Models/` untuk mengambil atau mengubah data lewat kode PHP:
+
+```php
+use App\Models\Location;
+use App\Models\Report;
+
+// Ambil lokasi beserta data petugasnya
+$locations = Location::with('officer')->get();
+
+// Ambil laporan beserta data lokasi, pelapor, dan petugasnya
+$reports = Report::with(['location', 'user', 'officer'])->latest()->get();
+```
+
+---
+
 ## Menjalankan Pengujian Otomatis (Testing)
 
 Untuk menjalankan pengujian fitur otomatis (halaman publik, autentikasi, *role middleware*, registrasi warga, pembuatan laporan, CRUD admin, dan konfirmasi pengangkutan petugas):

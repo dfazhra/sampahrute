@@ -85,16 +85,6 @@
             </button>
         </form>
 
-        <div class="demo-accounts">
-            <p>Akun demo untuk presentasi — klik untuk mengisi otomatis:</p>
-            <div>
-                @foreach (['admin' => ['🛠', 'Admin'], 'petugas' => ['🚚', 'Petugas'], 'warga' => ['🏠', 'Warga']] as $user => [$icon, $label])
-                    <button type="button" class="demo-chip" data-demo-user="{{ $user }}" data-demo-pass="{{ $user }}123">
-                        <span aria-hidden="true">{{ $icon }}</span>{{ $label }}
-                    </button>
-                @endforeach
-            </div>
-        </div>
 
         <p style="margin-top: 1rem; text-align: center; font-size: 0.92rem;">
             Warga baru? <a href="{{ route('register') }}" style="font-weight: 700; color: var(--green-700, #0b7541);">Daftar akun warga</a>
